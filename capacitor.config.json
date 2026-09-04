@@ -1,0 +1,8 @@
+{
+  "appId": "com.snoopy.theescapejourney",
+  "appName": "The Escape Journey",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
