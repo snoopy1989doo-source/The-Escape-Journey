@@ -15,6 +15,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install dependencies & Sync Capacitor
+      run: |
+        npm install
+        npm run build
+        npx cap sync android
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -24,11 +35,6 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-
-    - name: Sync web assets to Android
-      run: |
-        mkdir -p android/app/src/main/assets
-        cp index.html android/app/src/main/assets/index.html
 
     - name: Grant execute permission for gradlew
       working-directory: android
@@ -45,6 +51,9 @@ jobs:
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Project-2027-Escape-Journey-debug-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        name: The-Escape-Journey-debug-apk
+        path: |
+          android/app/build/outputs/apk/debug/*.apk
+          C:/temp/escape_journey_build/android/app/outputs/apk/debug/*.apk
+        if-no-files-found: warn
         retention-days: 30

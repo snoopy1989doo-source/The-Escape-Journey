@@ -1,7 +1,7 @@
 {
   "name": "the-escape-journey",
   "version": "1.0.0",
-  "description": "Project 2027: The Escape Journey - 16-Bit Retro RPG Life Simulator",
+  "description": "The Escape Journey - 16-Bit Retro RPG Life Simulator",
   "main": "sw.js",
   "scripts": {
     "build": "node -e \"const fs=require('fs'); fs.cpSync('index.html', 'www/index.html'); console.log('Synced www');\"",

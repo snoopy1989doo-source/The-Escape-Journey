@@ -1,7 +1,7 @@
 {
-  "name": "Project 2027: The Escape Journey",
-  "short_name": "Escape 2027",
-  "description": "Interactive Life RPG - From Factory Electrician to Full-Time Trader",
+  "name": "The Escape Journey",
+  "short_name": "EscapeJourney",
+  "description": "The Escape Journey - จากมนุษย์เงินเดือนสู้ชีวิต สู่ Full-Time Investor",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#141210",
