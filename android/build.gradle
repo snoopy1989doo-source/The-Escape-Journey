@@ -18,7 +18,9 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
-    buildDir = new File("C:/temp/escape_journey_build/${rootProject.name}/${project.name}")
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        buildDir = new File("C:/temp/escape_journey_build/${rootProject.name}/${project.name}")
+    }
     repositories {
         google()
         mavenCentral()
