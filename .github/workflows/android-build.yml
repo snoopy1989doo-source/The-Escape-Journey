@@ -35,6 +35,10 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Accept Android SDK licenses
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || yes | sdkmanager --licenses || true
+
     - name: Sync Capacitor Android
       run: |
         npx cap copy android
@@ -49,7 +53,25 @@ jobs:
 
     - name: Build Debug APK
       working-directory: android
-      run: ./gradlew assembleDebug --stacktrace
+      run: |
+        ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle.log
+
+    - name: Output Summary on Failure
+      if: failure()
+      run: |
+        echo "## ❌ Gradle Build Failure Details" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+        tail -n 60 gradle.log >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Build Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: gradle-build-log
+        path: gradle.log
+        if-no-files-found: ignore
+        retention-days: 7
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
