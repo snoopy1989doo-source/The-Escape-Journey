@@ -80,7 +80,30 @@
 
 ---
 
-## 🚀 วิธีเปิดใช้งาน
-1. ดับเบิลคลิกเปิดไฟล์ `index.html` บน Google Chrome, Microsoft Edge, Safari หรือเบราว์เซอร์ใดๆ ได้ทันที
-2. หรือใช้ Live Server / Web Server ในการทดสอบ
-3. บนสมาร์ตโฟน: เปิดผ่านเบราว์เซอร์ แล้วเลือกเมนู **"Add to Home Screen" (เพิ่มไปยังหน้าจอโฮม)** เพื่อใช้งานเสมือนแอป Native ได้ทันที
+## 🚀 วิธีเปิดใช้งาน & ทำแอปลงมือถือ Android (3 วิธี)
+
+### วิธีที่ 1: ติดตั้งเป็นแอปมือถือทันทีผ่าน PWA (เร็วที่สุด ไม่ต้องลงโปรแกรม)
+1. อัปโหลดโค้ดขึ้นเว็บโฮสติ้งฟรี (เช่น GitHub Pages, Vercel หรือ Cloudflare Pages) หรือเปิดผ่านเบราว์เซอร์ Chrome บนมือถือ Android
+2. แตะปุ่มเมนูจุด 3 จุด (มุมขวาบนของ Google Chrome)
+3. เลือก **"ติดตั้งแอป" (Install app)** หรือ **"เพิ่มลงในหน้าจอหลัก" (Add to Home screen)**
+4. ไอคอนแอป **"Project 2027"** จะปรากฏบนหน้าจอหลักมือถือทันที เปิดใช้งานแบบ Full-screen เสมือนแอปแท้ และใช้งานแบบออฟไลน์ได้ 100%
+
+---
+
+### วิธีที่ 2: ดาวน์โหลดไฟล์ Android APK อัตโนมัติจาก GitHub Actions (ไม่ต้องลงโปรแกรมในคอม)
+1. ใน Repository นี้มีระบบ **GitHub Actions** ตั้งค่าไว้ใน `.github/workflows/android-build.yml`
+2. ทุกครั้งที่มีการ Push โค้ด GitHub จะทำการ Compile ไฟล์ `.apk` ให้โดยอัตโนมัติ
+3. เข้าไปที่แท็บ **"Actions"** ใน GitHub Repository ➔ คลิกเลือกการรันล่าสุด ➔ เลื่อนลงมาที่หัวข้อ **"Artifacts"**
+4. ดาวน์โหลดไฟล์ `Project-2027-Escape-Journey-debug-apk` แล้วนำไปติดตั้งลงมือถือ Android ได้ทันที
+
+---
+
+### วิธีที่ 3: Build APK ด้วยตนเองผ่าน Android Studio / Gradle
+โครงสร้างโปรเจกต์ Android แบบ Native WebView ถูกจัดเตรียมไว้ในโฟลเดอร์ `android/` เรียบร้อยแล้ว:
+1. เปิดโปรแกรม **Android Studio**
+2. เลือก **Open** ➔ ชี้ไปที่โฟลเดอร์ `d:\Snoopy\WEB APP\The-Escape-Journey\android`
+3. รอให้ Gradle ซิงค์เสร็จสิ้น
+4. เสียบสาย USB เข้ากับมือถือ Android (เปิด USB Debugging) แล้วกดปุ่ม **Run (▶)** เพื่อติดตั้งลงมือถือ
+5. หรือไปที่เมนู **Build ➔ Build Bundle(s) / APK(s) ➔ Build APK(s)** เพื่อรับไฟล์ `.apk` ติดตั้งเอง
+6. หากแก้ไขไฟล์หน้าเว็บ `index.html` หลัก สามารถรัน `./build-android.ps1` เพื่อซิงค์ไฟล์เข้าสู่ Android Assets ได้ทันที
+
