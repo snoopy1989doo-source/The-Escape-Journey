@@ -86,11 +86,11 @@
     #roomCanvas { width: 100%; height: 100%; display: block; }
     .speech-bubble {
       position: absolute; background: #ffffff; color: #1c1917; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; line-height: 1.3;
-      max-width: 250px; pointer-events: none; opacity: 0; transform: scale(0.85); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 2px solid #000;
+      max-width: min(280px, 85vw); pointer-events: none; opacity: 0; transform: translate(-50%, -100%) scale(0.85); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 25;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5); border: 2px solid #000; text-align: center; word-break: break-word;
     }
-    .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 20px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #ffffff; }
-    .speech-bubble.visible { opacity: 1; transform: scale(1); }
+    .speech-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #ffffff; }
+    .speech-bubble.visible { opacity: 1; transform: translate(-50%, -100%) scale(1); }
     .stage-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .stage-badge { font-family: var(--font-pixel); font-size: 9px; color: var(--color-gold-bright); background: rgba(245, 158, 11, 0.15); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-gold); }
     .stage-buttons { display: flex; gap: 4px; }
@@ -228,7 +228,7 @@
 
             <div class="pet-actions">
               <button class="pixel-btn pixel-btn-gold pixel-btn-sm" style="flex:1;" onclick="app.petKungfu()">
-                🐾 ทักทายกังฟู
+                🐾 ลูบหัวกังฟู
               </button>
               <button class="pixel-btn pixel-btn-secondary pixel-btn-sm" style="flex:1;" onclick="app.petOleang()">
                 🐱 เกาคางโอเลี้ยง
@@ -755,19 +755,29 @@
         if (!this.enabled) return; this.init(); if (!this.ctx) return;
         try {
           const now = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-          osc.type = 'triangle'; osc.frequency.setValueAtTime(550, now);
-          osc.frequency.exponentialRampToValueAtTime(850, now + 0.15); osc.frequency.exponentialRampToValueAtTime(450, now + 0.38);
-          gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
-          osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.38);
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); osc.frequency.exponentialRampToValueAtTime(420, now + 0.35);
+          gain.gain.setValueAtTime(0.22, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.35);
         } catch(e) {}
       }
       playPurr() {
         if (!this.enabled) return; this.init(); if (!this.ctx) return;
         try {
-          const now = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-          osc.type = 'sine'; osc.frequency.setValueAtTime(65, now);
-          gain.gain.setValueAtTime(0.16, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-          osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.5);
+          const now = this.ctx.currentTime;
+          for (let i = 0; i < 3; i++) {
+            const start = now + (i * 0.14);
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(58, start);
+            osc.frequency.linearRampToValueAtTime(82, start + 0.07);
+            osc.frequency.linearRampToValueAtTime(50, start + 0.13);
+            gain.gain.setValueAtTime(0.25, start);
+            gain.gain.exponentialRampToValueAtTime(0.01, start + 0.13);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(start); osc.stop(start + 0.13);
+          }
         } catch(e) {}
       }
       playHit() {
@@ -792,9 +802,11 @@
         this.currentStage = 1;
         this.autoStage = true;
         this.activeTab = 'livingHub';
-        this.meloAction = 'type';
-        this.kungfuAction = 'breathe';
-        this.oleangAction = 'sleep';
+        this.npc = {
+          melo: { action: 'type', timer: 200, manualAction: null, manualTimer: 0, lookAt: null, lookTimer: 0, x: 305, y: 235 },
+          kungfu: { action: 'idle', timer: 150, manualAction: null, manualTimer: 0, x: 190, y: 270 },
+          oleang: { action: 'idle', timer: 170, manualAction: null, manualTimer: 0, x: 430, y: 255 }
+        };
         this.state = this.loadState();
         this.initUI();
         this.initCanvasEvents();
@@ -1698,52 +1710,175 @@
       }
 
       handleCanvasClick(x, y) {
-        if (x >= 260 && x <= 420 && y >= 140 && y <= 320) {
-          this.sound.playBlip(); this.meloAction = 'cheer';
-          setTimeout(() => { this.meloAction = 'type'; }, 1500);
-          this.spawnHeart(330, 160);
-          this.showSpeechBubble("ต๋อง: วินัยคือสะพานเชื่อมระหว่างเป้าหมายกับความสำเร็จ สู้โว้ย!", 330, 120);
+        const k = this.npc.kungfu;
+        const o = this.npc.oleang;
+        const m = this.npc.melo;
+
+        // Click Kungfu (Orange Tabby)
+        if (x >= k.x - 30 && x <= k.x + 45 && y >= k.y - 35 && y <= k.y + 30) {
+          this.petKungfu();
           return;
         }
-        if (x >= 40 && x <= 220 && y >= 140 && y <= 300) { this.petKungfu(); return; }
-        if (x >= 420 && x <= 580 && y >= 180 && y <= 320) { this.petOleang(); return; }
+
+        // Click Oleang (Grey Tabby)
+        if (x >= o.x - 30 && x <= o.x + 45 && y >= o.y - 35 && y <= o.y + 30) {
+          this.petOleang();
+          return;
+        }
+
+        // Click Melo (Human)
+        if (x >= m.x - 35 && x <= m.x + 50 && y >= m.y - 30 && y <= m.y + 65) {
+          this.interactMelo();
+          return;
+        }
+
         this.showSpeechBubble("แตะที่ Melo, กังฟู หรือโอเลี้ยง ได้เลยนะ!", x, y);
       }
 
       petKungfu() {
-        this.sound.playMeow(); this.kungfuAction = 'groom';
-        setTimeout(() => { this.kungfuAction = 'breathe'; }, 2000);
-        this.spawnHeart(150, 190);
+        this.sound.playMeow();
+        this.npc.kungfu.manualAction = 'pet_react';
+        this.npc.kungfu.manualTimer = 190;
+        this.npc.melo.lookAt = 'kungfu';
+        this.npc.melo.lookTimer = 190;
+
+        const kX = this.npc.kungfu.x, kY = this.npc.kungfu.y;
+        this.spawnHeart(kX + 15, kY - 15);
+        setTimeout(() => this.spawnHeart(kX + 8, kY - 25), 180);
+        setTimeout(() => this.spawnHeart(kX + 22, kY - 22), 360);
+
         const q = KUNGFU_QUOTES[Math.floor(Math.random() * KUNGFU_QUOTES.length)];
-        this.showSpeechBubble(`กังฟู: เหมียววว! "${q.text}" (${q.author})`, 160, 150);
+        const quoteTxt = q.author === 'กังฟู' ? `กังฟู: เหมียววว! "${q.text}"` : `กังฟู: เหมียววว! "${q.text}" - ${q.author}`;
+        this.showSpeechBubble(quoteTxt, kX + 15, kY - 25);
       }
 
       petOleang() {
-        this.sound.playPurr(); this.oleangAction = 'stretch';
-        setTimeout(() => { this.oleangAction = 'sleep'; }, 2000);
-        this.spawnHeart(480, 220);
+        this.sound.playPurr();
+        this.npc.oleang.manualAction = 'scratch_react';
+        this.npc.oleang.manualTimer = 190;
+        this.npc.melo.lookAt = 'oleang';
+        this.npc.melo.lookTimer = 190;
+
+        const oX = this.npc.oleang.x, oY = this.npc.oleang.y;
+        this.spawnHeart(oX + 15, oY - 15);
+        setTimeout(() => this.spawnHeart(oX + 8, oY - 25), 180);
+        setTimeout(() => this.spawnHeart(oX + 22, oY - 22), 360);
+
         const q = OLEANG_QUOTES[Math.floor(Math.random() * OLEANG_QUOTES.length)];
-        this.showSpeechBubble(`โอเลี้ยง: ฟืดฟาดดด... "${q.text}"`, 440, 180);
+        const quoteTxt = q.author === 'โอเลี้ยง' ? `โอเลี้ยง: ฟืดฟาดดด ครืดดด... "${q.text}"` : `โอเลี้ยง: ฟืดฟาดดด ครืดดด... "${q.text}" - ${q.author}`;
+        this.showSpeechBubble(quoteTxt, oX + 15, oY - 25);
+      }
+
+      interactMelo() {
+        this.sound.playCoin();
+        this.npc.melo.manualAction = 'cheer';
+        this.npc.melo.manualTimer = 160;
+
+        const mX = this.npc.melo.x, mY = this.npc.melo.y;
+        this.spawnHeart(mX + 12, mY - 15);
+
+        const stageQuotes = {
+          1: "ต๋อง: เหนื่อยแต่ยอมแพ้ไม่ได้! ปลดหนี้ให้เกลี้ยง แล้วเราจะโบยบิน!",
+          2: "ต๋อง: เงินสำรองฉุกเฉินและวินัย คือเกราะคุ้มกันชีวิตที่ดีที่สุด!",
+          3: "ต๋อง: กระแสเงินสดเริ่มโตขึ้นเรื่อยๆ แล้ว! รักษาแผนการและโฟกัสวินัย!",
+          4: "ต๋อง: ในที่สุดก็ทำสำเร็จ... อิสรภาพทางการเงิน! ขอบคุณกังฟูกับโอเลี้ยงที่สู้มาด้วยกัน!"
+        };
+        this.showSpeechBubble(stageQuotes[this.currentStage] || stageQuotes[1], mX + 12, mY - 25);
       }
 
       showSpeechBubble(text, x, y) {
         const bubble = document.getElementById('speechBubble');
         bubble.textContent = text;
-        bubble.style.left = `${Math.min(Math.max(x - 50, 15), 360)}px`;
-        bubble.style.top = `${Math.max(y - 65, 15)}px`;
+        const pctX = Math.min(Math.max((x / 640) * 100, 15), 85);
+        const pctY = Math.min(Math.max((y / 360) * 100, 15), 80);
+        bubble.style.left = `${pctX}%`;
+        bubble.style.top = `${pctY}%`;
         bubble.classList.add('visible');
         clearTimeout(this._bubbleTimer);
-        this._bubbleTimer = setTimeout(() => { bubble.classList.remove('visible'); }, 4000);
+        this._bubbleTimer = setTimeout(() => { bubble.classList.remove('visible'); }, 4200);
       }
 
       spawnHeart(x, y) {
         const container = document.getElementById('canvasWrapper');
         const heart = document.createElement('div');
         heart.className = 'heart-particle';
-        heart.textContent = Math.random() > 0.4 ? '💖' : '🔥';
-        heart.style.left = `${x}px`; heart.style.top = `${y}px`;
+        const icons = ['💖', '✨', '🐾', '😻', '🐟', '⭐'];
+        heart.textContent = icons[Math.floor(Math.random() * icons.length)];
+        heart.style.left = `${(x / 640) * 100}%`;
+        heart.style.top = `${(y / 360) * 100}%`;
         container.appendChild(heart);
         setTimeout(() => heart.remove(), 1200);
+      }
+
+      updateNPCs() {
+        const stage = this.currentStage;
+
+        // 1. Kungfu Autonomous Loop
+        if (this.npc.kungfu.manualTimer > 0) {
+          this.npc.kungfu.manualTimer--;
+          if (this.npc.kungfu.manualTimer === 0) this.npc.kungfu.manualAction = null;
+        } else {
+          this.npc.kungfu.timer--;
+          if (this.npc.kungfu.timer <= 0) {
+            const actionsByStage = {
+              1: ['idle', 'window', 'groom', 'catnap'],
+              2: ['idle', 'cat_tree', 'pounce', 'groom'],
+              3: ['idle', 'screen_watch', 'bat_mouse', 'catnap'],
+              4: ['idle', 'sunbed', 'bird_watch', 'loaf']
+            };
+            const pool = actionsByStage[stage] || ['idle'];
+            const cur = this.npc.kungfu.action;
+            const remaining = pool.filter(a => a !== cur);
+            this.npc.kungfu.action = remaining[Math.floor(Math.random() * remaining.length)] || pool[0];
+            this.npc.kungfu.timer = 180 + Math.floor(Math.random() * 180);
+          }
+        }
+
+        // 2. Oleang Autonomous Loop
+        if (this.npc.oleang.manualTimer > 0) {
+          this.npc.oleang.manualTimer--;
+          if (this.npc.oleang.manualTimer === 0) this.npc.oleang.manualAction = null;
+        } else {
+          this.npc.oleang.timer--;
+          if (this.npc.oleang.timer <= 0) {
+            const actionsByStage = {
+              1: ['idle', 'box_sleep', 'yawn', 'stretch'],
+              2: ['idle', 'cushion', 'belly', 'loaf'],
+              3: ['idle', 'rub_chair', 'fat_boss', 'stretch'],
+              4: ['idle', 'sun_belly', 'tail_wag', 'loaf']
+            };
+            const pool = actionsByStage[stage] || ['idle'];
+            const cur = this.npc.oleang.action;
+            const remaining = pool.filter(a => a !== cur);
+            this.npc.oleang.action = remaining[Math.floor(Math.random() * remaining.length)] || pool[0];
+            this.npc.oleang.timer = 200 + Math.floor(Math.random() * 180);
+          }
+        }
+
+        // 3. Melo Autonomous Loop
+        if (this.npc.melo.lookTimer > 0) {
+          this.npc.melo.lookTimer--;
+          if (this.npc.melo.lookTimer === 0) this.npc.melo.lookAt = null;
+        }
+        if (this.npc.melo.manualTimer > 0) {
+          this.npc.melo.manualTimer--;
+          if (this.npc.melo.manualTimer === 0) this.npc.melo.manualAction = null;
+        } else {
+          this.npc.melo.timer--;
+          if (this.npc.melo.timer <= 0) {
+            const actionsByStage = {
+              1: ['type', 'coffee', 'headache', 'stretch'],
+              2: ['read_book', 'calculate', 'cheer', 'coffee'],
+              3: ['trading', 'journal', 'celebrate', 'sip'],
+              4: ['terrace_relax', 'reading_tablet', 'gaze_sky', 'cheer']
+            };
+            const pool = actionsByStage[stage] || ['type'];
+            const cur = this.npc.melo.action;
+            const remaining = pool.filter(a => a !== cur);
+            this.npc.melo.action = remaining[Math.floor(Math.random() * remaining.length)] || pool[0];
+            this.npc.melo.timer = 220 + Math.floor(Math.random() * 200);
+          }
+        }
       }
 
       renderRoom() {
@@ -1799,17 +1934,20 @@
         } else if (stage === 2) {
           ctx.fillStyle = '#78350f'; ctx.fillRect(250, 230, 140, 50);
           ctx.fillStyle = '#451a03'; ctx.fillRect(255, 280, 14, 50); ctx.fillRect(371, 280, 14, 50);
-          ctx.fillStyle = '#451a03'; ctx.fillRect(160, 140, 60, 120);
-          ctx.fillStyle = '#b45309'; ctx.fillRect(165, 165, 50, 8); ctx.fillRect(165, 205, 50, 8);
-          ctx.fillStyle = '#ef4444'; ctx.fillRect(168, 148, 8, 17);
-          ctx.fillStyle = '#10b981'; ctx.fillRect(178, 145, 10, 20);
-          ctx.fillStyle = '#3b82f6'; ctx.fillRect(190, 148, 8, 17);
+          // Bookshelf & Cat tree
+          ctx.fillStyle = '#451a03'; ctx.fillRect(145, 140, 70, 120);
+          ctx.fillStyle = '#b45309'; ctx.fillRect(150, 165, 60, 8); ctx.fillRect(150, 205, 60, 8);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(155, 148, 8, 17);
+          ctx.fillStyle = '#10b981'; ctx.fillRect(165, 145, 10, 20);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(177, 148, 8, 17);
+          // Warm desk lamp
           ctx.fillStyle = '#f59e0b'; ctx.fillRect(360, 205, 14, 25);
           ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
           ctx.beginPath(); ctx.arc(367, 215, 26, 0, Math.PI * 2); ctx.fill();
         } else if (stage === 3) {
           ctx.fillStyle = '#1e1b18'; ctx.fillRect(220, 235, 200, 50);
           ctx.fillStyle = '#0f0d0c'; ctx.fillRect(230, 285, 16, 50); ctx.fillRect(394, 285, 16, 50);
+          // 3 Multi-monitors
           ctx.fillStyle = '#0f172a'; ctx.fillRect(215, 170, 55, 45); ctx.fillStyle = '#0284c7'; ctx.fillRect(218, 173, 49, 39);
           ctx.fillStyle = '#0f172a'; ctx.fillRect(275, 155, 90, 60); ctx.fillStyle = '#090d16'; ctx.fillRect(278, 158, 84, 54);
           ctx.fillStyle = '#0f172a'; ctx.fillRect(370, 170, 55, 45); ctx.fillStyle = '#059669'; ctx.fillRect(373, 173, 49, 39);
@@ -1829,78 +1967,387 @@
           }
         }
 
-        // 3. RENDER MELO
+        // Update NPC Activity Timers
+        this.updateNPCs();
+
+        // 3. Render Characters
+        this.drawMelo(ctx, stage, t);
+        this.drawKungfu(ctx, stage, t);
+        this.drawOleang(ctx, stage, t);
+      }
+
+      /* ================================================================
+         CHARACTER SPRITES: MELO, KUNGFU, OLEANG
+         ================================================================ */
+      drawMelo(ctx, stage, t) {
+        const action = this.npc.melo.manualAction || this.npc.melo.action;
+        const lookAt = this.npc.melo.lookAt;
         const meloBounce = Math.sin(t * 0.12) * 2;
         const meloX = stage === 4 ? 310 : (stage === 1 ? 305 : 295);
         const meloY = stage === 1 ? 235 : (stage === 4 ? 170 : 185);
 
-        ctx.fillStyle = '#1B1B1B'; ctx.fillRect(meloX - 8, meloY + 22 + meloBounce, 40, 30);
-        ctx.fillStyle = '#fbbf24'; ctx.fillRect(meloX + 9, meloY + 30 + meloBounce, 6, 2); ctx.fillRect(meloX + 7, meloY + 32 + meloBounce, 10, 2); ctx.fillRect(meloX + 10, meloY + 34 + meloBounce, 4, 3);
-        ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX - 2, meloY + 2 + meloBounce, 28, 22);
-        ctx.fillStyle = '#1B1B1B'; ctx.fillRect(meloX - 6, meloY - 10 + meloBounce, 36, 14); ctx.fillRect(meloX - 7, meloY - 4 + meloBounce, 6, 12); ctx.fillRect(meloX + 25, meloY - 4 + meloBounce, 6, 12);
-        ctx.fillRect(meloX - 4, meloY - 13 + meloBounce, 8, 4); ctx.fillRect(meloX + 8, meloY - 14 + meloBounce, 9, 5); ctx.fillRect(meloX + 20, meloY - 12 + meloBounce, 8, 4);
-        ctx.fillStyle = '#121212'; ctx.fillRect(meloX + 3, meloY + 8 + meloBounce, 4, 4); ctx.fillRect(meloX + 17, meloY + 8 + meloBounce, 4, 4);
-        ctx.fillStyle = '#1e1b18'; ctx.fillRect(meloX + 6, meloY + 16 + meloBounce, 12, 2);
+        this.npc.melo.x = meloX;
+        this.npc.melo.y = meloY;
 
-        if (stage === 4) {
-          ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX + 28, meloY + 26 + meloBounce, 10, 6);
-          ctx.fillStyle = '#ffffff'; ctx.fillRect(meloX + 36, meloY + 22 + meloBounce, 10, 12);
-          const sOff = (t * 0.5) % 15;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; ctx.fillRect(meloX + 39, meloY + 16 + meloBounce - sOff, 2, 4);
+        // Head angle offset based on looking at pets
+        let headShiftX = 0;
+        let eyeShiftX = 0;
+        if (lookAt === 'kungfu') { headShiftX = -2; eyeShiftX = -2; }
+        else if (lookAt === 'oleang') { headShiftX = 2; eyeShiftX = 2; }
+
+        // 1. Torso: Black AC/DC T-shirt
+        ctx.fillStyle = '#1B1B1B'; ctx.fillRect(meloX - 8, meloY + 22 + meloBounce, 40, 30);
+        // Yellow AC/DC lightning bolt
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(meloX + 9, meloY + 29 + meloBounce, 6, 2);
+        ctx.fillRect(meloX + 7, meloY + 31 + meloBounce, 10, 2);
+        ctx.fillRect(meloX + 10, meloY + 33 + meloBounce, 4, 4);
+
+        // 2. Boxers & Legs (Sitting)
+        ctx.fillStyle = '#334155'; ctx.fillRect(meloX - 6, meloY + 52 + meloBounce, 36, 14);
+        ctx.fillStyle = '#fbbf24'; ctx.fillRect(meloX - 2, meloY + 56 + meloBounce, 2, 2); ctx.fillRect(meloX + 16, meloY + 56 + meloBounce, 2, 2); // pattern
+        ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX - 2, meloY + 66 + meloBounce, 10, 16); ctx.fillRect(meloX + 16, meloY + 66 + meloBounce, 10, 16);
+
+        // 3. Face & Neck
+        ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX - 2 + headShiftX, meloY + 2 + meloBounce, 28, 22);
+
+        // 4. Messy Black Hair
+        ctx.fillStyle = '#1B1B1B';
+        ctx.fillRect(meloX - 6 + headShiftX, meloY - 10 + meloBounce, 36, 14);
+        ctx.fillRect(meloX - 7 + headShiftX, meloY - 4 + meloBounce, 6, 12);
+        ctx.fillRect(meloX + 25 + headShiftX, meloY - 4 + meloBounce, 6, 12);
+        ctx.fillRect(meloX - 4 + headShiftX, meloY - 13 + meloBounce, 8, 4);
+        ctx.fillRect(meloX + 8 + headShiftX, meloY - 14 + meloBounce, 9, 5);
+        ctx.fillRect(meloX + 20 + headShiftX, meloY - 12 + meloBounce, 8, 4);
+
+        // 5. Facial Features (Dynamic Eyes & Mouth)
+        if (action === 'cheer' || action === 'celebrate' || lookAt !== null) {
+          // Happy smiling eyes ^ ^
+          ctx.fillStyle = '#1e1b18';
+          ctx.fillRect(meloX + 3 + eyeShiftX, meloY + 9 + meloBounce, 4, 1);
+          ctx.fillRect(meloX + 2 + eyeShiftX, meloY + 10 + meloBounce, 1, 2);
+          ctx.fillRect(meloX + 6 + eyeShiftX, meloY + 10 + meloBounce, 1, 2);
+          ctx.fillRect(meloX + 17 + eyeShiftX, meloY + 9 + meloBounce, 4, 1);
+          ctx.fillRect(meloX + 16 + eyeShiftX, meloY + 10 + meloBounce, 1, 2);
+          ctx.fillRect(meloX + 20 + eyeShiftX, meloY + 10 + meloBounce, 1, 2);
+          // Happy smile
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(meloX + 8 + headShiftX, meloY + 16 + meloBounce, 8, 4);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(meloX + 9 + headShiftX, meloY + 16 + meloBounce, 6, 2);
+        } else if (action === 'headache') {
+          // Stressed eyes and sweat drop
+          ctx.fillStyle = '#121212';
+          ctx.fillRect(meloX + 3, meloY + 9 + meloBounce, 5, 2);
+          ctx.fillRect(meloX + 16, meloY + 9 + meloBounce, 5, 2);
+          ctx.fillStyle = '#1e1b18'; ctx.fillRect(meloX + 8, meloY + 17 + meloBounce, 8, 1); // straight frown
+          // Sweat drop
+          ctx.fillStyle = '#38bdf8'; ctx.fillRect(meloX + 27, meloY + 4 + meloBounce, 3, 5); ctx.fillRect(meloX + 28, meloY + 2 + meloBounce, 1, 2);
         } else {
-          const typeY = (t % 8 < 4) ? 1 : -1;
-          ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX - 6, meloY + 36 + meloBounce + typeY, 10, 6); ctx.fillRect(meloX + 20, meloY + 36 + meloBounce - typeY, 10, 6);
+          // Normal focused eyes
+          ctx.fillStyle = '#121212';
+          ctx.fillRect(meloX + 3 + eyeShiftX, meloY + 8 + meloBounce, 4, 4);
+          ctx.fillRect(meloX + 17 + eyeShiftX, meloY + 8 + meloBounce, 4, 4);
+          ctx.fillStyle = '#1e1b18'; ctx.fillRect(meloX + 6 + headShiftX, meloY + 16 + meloBounce, 12, 2);
         }
 
-        // 4. RENDER KUNGFU (Orange Tabby & White Cat)
-        const kungBreath = Math.sin(t * 0.08) * 1.5;
-        const kungTail = Math.sin(t * 0.18) * 3;
+        // 6. Action specific arms & accessories
+        if (action === 'cheer' || action === 'celebrate') {
+          // Arms raised high in victory \o/
+          ctx.fillStyle = '#F4C27A';
+          ctx.fillRect(meloX - 16, meloY + 4 + meloBounce, 7, 22);
+          ctx.fillRect(meloX + 33, meloY + 4 + meloBounce, 7, 22);
+        } else if (action === 'coffee' || action === 'sip') {
+          // Holding coffee mug near mouth
+          ctx.fillStyle = '#F4C27A'; ctx.fillRect(meloX + 20, meloY + 18 + meloBounce, 10, 8);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(meloX + 26, meloY + 14 + meloBounce, 10, 12);
+          // Steam rising
+          const sOff = (t * 0.4) % 16;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'; ctx.fillRect(meloX + 30, meloY + 8 + meloBounce - sOff, 2, 4);
+        } else if (action === 'headache') {
+          // Hands massaging temples
+          ctx.fillStyle = '#F4C27A';
+          ctx.fillRect(meloX - 8, meloY + 6 + meloBounce, 7, 10);
+          ctx.fillRect(meloX + 25, meloY + 6 + meloBounce, 7, 10);
+        } else if (action === 'stretch') {
+          // Stretching arms up high
+          ctx.fillStyle = '#F4C27A';
+          ctx.fillRect(meloX - 12, meloY - 8 + meloBounce, 6, 26);
+          ctx.fillRect(meloX + 30, meloY - 8 + meloBounce, 6, 26);
+        } else if (action === 'read_book') {
+          // Holding open book
+          ctx.fillStyle = '#059669'; ctx.fillRect(meloX - 2, meloY + 28 + meloBounce, 28, 14);
+          ctx.fillStyle = '#f8fafc'; ctx.fillRect(meloX + 1, meloY + 30 + meloBounce, 10, 10); ctx.fillRect(meloX + 13, meloY + 30 + meloBounce, 10, 10);
+        } else if (action === 'journal') {
+          // Writing in notebook with pencil
+          ctx.fillStyle = '#b45309'; ctx.fillRect(meloX - 2, meloY + 32 + meloBounce, 24, 12);
+          ctx.fillStyle = '#f8fafc'; ctx.fillRect(meloX, meloY + 33 + meloBounce, 20, 10);
+          ctx.fillStyle = '#fbbf24'; ctx.fillRect(meloX + 16, meloY + 28 + meloBounce, 2, 8); // pencil
+        } else if (action === 'reading_tablet') {
+          // Holding tablet with glowing screen
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(meloX + 2, meloY + 26 + meloBounce, 22, 16);
+          ctx.fillStyle = '#38bdf8'; ctx.fillRect(meloX + 4, meloY + 28 + meloBounce, 18, 12);
+        } else {
+          // Default: typing on keyboard with active pixel fingers
+          const typeY = (t % 8 < 4) ? 1 : -1;
+          ctx.fillStyle = '#F4C27A';
+          ctx.fillRect(meloX - 6, meloY + 36 + meloBounce + typeY, 10, 6);
+          ctx.fillRect(meloX + 20, meloY + 36 + meloBounce - typeY, 10, 6);
+        }
+      }
+
+      drawKungfu(ctx, stage, t) {
+        const action = this.npc.kungfu.manualAction || this.npc.kungfu.action;
+        const breath = Math.sin(t * 0.08) * 1.5;
+        const isPetting = action === 'pet_react';
+        const tailSpeed = isPetting ? 0.45 : 0.18;
+        const tailSwing = Math.sin(t * tailSpeed) * (isPetting ? 5 : 3);
+
         let kungX = 140, kungY = 245;
         if (stage === 1) { kungX = 190; kungY = 270; }
         else if (stage === 2) {
-          kungX = 130; kungY = 175;
-          ctx.fillStyle = '#78350f'; ctx.fillRect(145, 195, 10, 70); ctx.fillStyle = '#a16207'; ctx.fillRect(115, 190, 70, 8);
-        } else if (stage === 3) { kungX = 295; kungY = 135; }
-        else {
-          kungX = 150; kungY = 235;
+          if (action === 'cat_tree') {
+            kungX = 155; kungY = 165;
+          } else {
+            kungX = 180; kungY = 255;
+          }
+        } else if (stage === 3) {
+          kungX = 295; kungY = 135;
+        } else {
+          kungX = 150; kungY = 230;
           ctx.fillStyle = '#dc2626'; ctx.fillRect(130, 245, 65, 18); ctx.fillStyle = '#fbbf24'; ctx.fillRect(128, 258, 69, 4);
         }
 
-        ctx.fillStyle = '#E07B22'; ctx.fillRect(kungX, kungY + kungBreath, 24, 15);
-        ctx.fillStyle = '#b45309'; ctx.fillRect(kungX + 5, kungY + 1 + kungBreath, 3, 13); ctx.fillRect(kungX + 13, kungY + 1 + kungBreath, 3, 13);
-        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(kungX + 1, kungY + 7 + kungBreath, 7, 8); ctx.fillRect(kungX + 2, kungY + 13 + kungBreath, 5, 4); ctx.fillRect(kungX + 16, kungY + 13 + kungBreath, 5, 4);
-        ctx.fillStyle = '#E07B22'; ctx.fillRect(kungX + 13, kungY - 8 + kungBreath, 15, 12);
-        ctx.fillRect(kungX + 13, kungY - 14 + kungBreath, 5, 6); ctx.fillRect(kungX + 23, kungY - 14 + kungBreath, 5, 6);
-        ctx.fillStyle = '#fbcfe8'; ctx.fillRect(kungX + 15, kungY - 12 + kungBreath, 2, 3); ctx.fillRect(kungX + 24, kungY - 12 + kungBreath, 2, 3);
-        ctx.fillStyle = '#78350f'; ctx.fillRect(kungX + 18, kungY - 4 + kungBreath, 3, 3);
-        ctx.fillStyle = '#f472b6'; ctx.fillRect(kungX + 24, kungY - 2 + kungBreath, 2, 2);
-        ctx.fillStyle = '#E07B22'; ctx.fillRect(kungX - 6, kungY + 4 + kungBreath + (kungTail * 0.5), 7, 4); ctx.fillRect(kungX - 10, kungY - 1 + kungBreath + kungTail, 5, 5);
-        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(kungX - 12, kungY - 3 + kungBreath + kungTail, 4, 4);
+        this.npc.kungfu.x = kungX;
+        this.npc.kungfu.y = kungY;
 
-        // 5. RENDER OLEANG (Grey/Brown Tabby Cat)
-        const oleBreath = Math.sin(t * 0.07 + 1) * 1.5;
-        const oleTail = Math.sin(t * 0.15 + 1) * 3;
+        const cBody = '#E07B22';
+        const cStripe = '#b45309';
+        const cWhite = '#FFFFFF';
+        const cPink = '#f472b6';
+
+        if (isPetting) {
+          // ==========================================
+          // ACTION: PETTING REACTION (ลูบหัวกังฟู - แอ่นหลังฟิน หางชี้สั่น ตาหยี)
+          // ==========================================
+          const py = kungY - 4 + Math.sin(t * 0.15) * 1.5;
+
+          // Body arched up
+          ctx.fillStyle = cBody; ctx.fillRect(kungX, py, 26, 16);
+          ctx.fillStyle = cStripe; ctx.fillRect(kungX + 6, py + 1, 3, 14); ctx.fillRect(kungX + 14, py + 1, 3, 14);
+          // White chest bib and white paws
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX + 1, py + 6, 8, 9);
+          ctx.fillRect(kungX + 2, py + 14, 5, 4); ctx.fillRect(kungX + 18, py + 14, 5, 4);
+
+          // Head tilted up in bliss
+          ctx.fillStyle = cBody; ctx.fillRect(kungX + 14, py - 10, 16, 14);
+          // Ears relaxed flat
+          ctx.fillRect(kungX + 12, py - 14, 6, 5); ctx.fillRect(kungX + 24, py - 14, 6, 5);
+          ctx.fillStyle = '#fbcfe8'; ctx.fillRect(kungX + 13, py - 13, 3, 3); ctx.fillRect(kungX + 25, py - 13, 3, 3);
+
+          // Happy closed eyes ^ ^
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(kungX + 17, py - 6, 3, 1); ctx.fillRect(kungX + 16, py - 5, 1, 2); ctx.fillRect(kungX + 20, py - 5, 1, 2);
+          ctx.fillRect(kungX + 24, py - 6, 3, 1); ctx.fillRect(kungX + 23, py - 5, 1, 2); ctx.fillRect(kungX + 27, py - 5, 1, 2);
+          // Pink nose & happy smile
+          ctx.fillStyle = cPink; ctx.fillRect(kungX + 22, py - 2, 2, 2);
+          ctx.fillStyle = '#78350f'; ctx.fillRect(kungX + 21, py, 4, 1);
+
+          // Tail standing straight up vibrating fast
+          ctx.fillStyle = cBody; ctx.fillRect(kungX - 5, py + 4, 6, 4);
+          ctx.fillRect(kungX - 8, py - 2 + (tailSwing * 0.5), 5, 6);
+          ctx.fillRect(kungX - 11, py - 8 + tailSwing, 5, 7);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX - 12, py - 13 + tailSwing, 4, 6); // white tail tip
+
+          // Animated Pixel Petting Hand Stroking Head
+          const strokeX = Math.sin(t * 0.25) * 5;
+          const handX = kungX + 16 + strokeX;
+          const handY = py - 22 + Math.cos(t * 0.25) * 2;
+          ctx.fillStyle = '#F4C27A'; // hand
+          ctx.fillRect(handX, handY, 10, 6);
+          ctx.fillRect(handX - 2, handY + 2, 4, 4);
+          ctx.fillRect(handX + 2, handY + 6, 7, 3);
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(handX + 8, handY - 3, 5, 7); // sleeve
+
+          // Floating mini bliss sparkles
+          if ((t % 28) < 14) {
+            ctx.fillStyle = '#fbbf24'; ctx.fillRect(kungX + 28, py - 22, 3, 3);
+          }
+        } else if (action === 'groom') {
+          // Grooming: paw lifted to face, licking fur
+          const gy = kungY + breath;
+          ctx.fillStyle = cBody; ctx.fillRect(kungX, gy, 24, 15);
+          ctx.fillStyle = cStripe; ctx.fillRect(kungX + 5, gy + 1, 3, 13); ctx.fillRect(kungX + 13, gy + 1, 3, 13);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX + 1, gy + 7, 7, 8); ctx.fillRect(kungX + 2, gy + 13, 5, 4);
+          // Head tilted down licking paw
+          ctx.fillStyle = cBody; ctx.fillRect(kungX + 13, gy - 6, 14, 12);
+          ctx.fillRect(kungX + 13, gy - 12, 5, 6); ctx.fillRect(kungX + 22, gy - 12, 5, 6);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX + 19, gy - 4, 4, 6); // lifted paw
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(kungX + 17, gy - 2, 2, 2); // tongue
+          // Tail
+          ctx.fillStyle = cBody; ctx.fillRect(kungX - 6, gy + 4 + (tailSwing * 0.5), 7, 4); ctx.fillRect(kungX - 10, gy - 1 + tailSwing, 5, 5);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX - 12, gy - 3 + tailSwing, 4, 4);
+        } else if (action === 'pounce') {
+          // Playful pounce crouch: butt wiggle
+          const pw = Math.sin(t * 0.35) * 3;
+          ctx.fillStyle = cBody; ctx.fillRect(kungX, kungY + 3, 24, 12);
+          ctx.fillStyle = cStripe; ctx.fillRect(kungX + 4, kungY + 3 + pw, 3, 12);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX + 2, kungY + 12, 5, 3); ctx.fillRect(kungX + 18, kungY + 12, 5, 3);
+          // Head low, huge amber eyes
+          ctx.fillStyle = cBody; ctx.fillRect(kungX + 14, kungY - 4, 14, 12);
+          ctx.fillRect(kungX + 14, kungY - 9, 4, 5); ctx.fillRect(kungX + 23, kungY - 9, 4, 5);
+          ctx.fillStyle = '#fbbf24'; ctx.fillRect(kungX + 18, kungY - 2, 4, 4); ctx.fillRect(kungX + 23, kungY - 2, 4, 4); // big eyes
+          ctx.fillStyle = '#000000'; ctx.fillRect(kungX + 19, kungY - 1, 2, 2); ctx.fillRect(kungX + 24, kungY - 1, 2, 2);
+          // Tail wiggling high
+          ctx.fillStyle = cBody; ctx.fillRect(kungX - 6, kungY + pw, 7, 4); ctx.fillRect(kungX - 10, kungY - 4 + pw, 5, 5);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX - 12, kungY - 7 + pw, 4, 4);
+        } else {
+          // Normal Sitting / Loafing Pose
+          ctx.fillStyle = cBody; ctx.fillRect(kungX, kungY + breath, 24, 15);
+          ctx.fillStyle = cStripe; ctx.fillRect(kungX + 5, kungY + 1 + breath, 3, 13); ctx.fillRect(kungX + 13, kungY + 1 + breath, 3, 13);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX + 1, kungY + 7 + breath, 7, 8); ctx.fillRect(kungX + 2, kungY + 13 + breath, 5, 4); ctx.fillRect(kungX + 16, kungY + 13 + breath, 5, 4);
+          // Head
+          ctx.fillStyle = cBody; ctx.fillRect(kungX + 13, kungY - 8 + breath, 15, 12);
+          ctx.fillRect(kungX + 13, kungY - 14 + breath, 5, 6); ctx.fillRect(kungX + 23, kungY - 14 + breath, 5, 6);
+          ctx.fillStyle = '#fbcfe8'; ctx.fillRect(kungX + 15, kungY - 12 + breath, 2, 3); ctx.fillRect(kungX + 24, kungY - 12 + breath, 2, 3);
+          // Eye tracking charts or blinking
+          let eyeGazeX = 0;
+          if (action === 'screen_watch') eyeGazeX = Math.sin(t * 0.08) > 0 ? 1 : -1;
+          ctx.fillStyle = '#fbbf24'; ctx.fillRect(kungX + 17 + eyeGazeX, kungY - 4 + breath, 3, 3);
+          ctx.fillStyle = '#000000'; ctx.fillRect(kungX + 18 + eyeGazeX, kungY - 4 + breath, 1, 3);
+          ctx.fillStyle = cPink; ctx.fillRect(kungX + 24, kungY - 2 + breath, 2, 2);
+          // Tail
+          ctx.fillStyle = cBody; ctx.fillRect(kungX - 6, kungY + 4 + breath + (tailSwing * 0.5), 7, 4); ctx.fillRect(kungX - 10, kungY - 1 + breath + tailSwing, 5, 5);
+          ctx.fillStyle = cWhite; ctx.fillRect(kungX - 12, kungY - 3 + breath + tailSwing, 4, 4);
+        }
+      }
+
+      drawOleang(ctx, stage, t) {
+        const action = this.npc.oleang.manualAction || this.npc.oleang.action;
+        const breath = Math.sin(t * 0.07 + 1) * 1.5;
+        const tailSwing = Math.sin(t * 0.15 + 1) * 3;
+        const isScratch = action === 'scratch_react';
+
         let oleX = 430, oleY = 250;
         if (stage === 1) {
           oleX = 430; oleY = 255;
+          // Cardboard box
           ctx.fillStyle = '#b45309'; ctx.fillRect(415, 255, 45, 30); ctx.fillStyle = '#78350f'; ctx.fillRect(418, 252, 39, 5);
         } else if (stage === 2) {
           oleX = 175; oleY = 270;
+          // Soft floor cushion
           ctx.fillStyle = '#374151'; ctx.fillRect(160, 275, 55, 20);
         } else if (stage === 3) {
           oleX = 250; oleY = 295;
         } else {
           oleX = 400; oleY = 225;
+          // Terrace lounger cushion
           ctx.fillStyle = '#065f46'; ctx.fillRect(380, 235, 60, 18);
         }
 
-        ctx.fillStyle = '#5A524A'; ctx.fillRect(oleX, oleY + oleBreath, 22, 14);
-        ctx.fillStyle = '#37302A'; ctx.fillRect(oleX + 5, oleY + 1 + oleBreath, 2, 12); ctx.fillRect(oleX + 11, oleY + 1 + oleBreath, 2, 12);
-        ctx.fillStyle = '#5A524A'; ctx.fillRect(oleX + 12, oleY - 7 + oleBreath, 13, 11);
-        ctx.fillRect(oleX + 12, oleY - 12 + oleBreath, 4, 5); ctx.fillRect(oleX + 21, oleY - 12 + oleBreath, 4, 5);
-        const oleBlink = (t % 120 < 6) ? 1 : 3;
-        ctx.fillStyle = '#65a30d'; ctx.fillRect(oleX + 16, oleY - 3 + oleBreath, 3, oleBlink);
-        ctx.fillStyle = '#5A524A'; ctx.fillRect(oleX - 5, oleY + 5 + oleBreath + (oleTail * 0.5), 6, 4); ctx.fillRect(oleX - 8, oleY + 1 + oleBreath + oleTail, 4, 4);
+        this.npc.oleang.x = oleX;
+        this.npc.oleang.y = oleY;
+
+        const cCoat = '#5A524A';
+        const cStripe = '#37302A';
+        const cBelly = '#E2DCD5';
+        const cGreen = '#65a30d';
+
+        if (isScratch) {
+          // ==========================================
+          // ACTION: SCRATCH REACTION (เกาคางโอเลี้ยง - นอนหงายแผ่พุง เท้าชี้ฟ้าดุ๊กดิ๊ก คลื่นเพอร์รรร)
+          // ==========================================
+          const oy = oleY + Math.sin(t * 0.12) * 1.5;
+
+          // Back & Tabby body on floor
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX - 2, oy + 4, 28, 14);
+          ctx.fillStyle = cStripe; ctx.fillRect(oleX + 2, oy + 12, 3, 6); ctx.fillRect(oleX + 10, oy + 12, 3, 6); ctx.fillRect(oleX + 18, oy + 12, 3, 6);
+
+          // Big round soft fluffy belly facing up
+          ctx.fillStyle = cBelly; ctx.fillRect(oleX + 4, oy + 4, 18, 11);
+          ctx.fillStyle = '#b5afa6'; ctx.fillRect(oleX + 8, oy + 7, 3, 3); ctx.fillRect(oleX + 14, oy + 7, 3, 3);
+
+          // 4 cute paws in the air wiggling happily
+          const pw1 = Math.sin(t * 0.35) * 3;
+          const pw2 = -Math.sin(t * 0.35) * 3;
+          ctx.fillStyle = cCoat;
+          ctx.fillRect(oleX + 5, oy - 2 + pw1, 4, 7); ctx.fillRect(oleX + 10, oy - 2 + pw2, 4, 7);
+          ctx.fillRect(oleX + 17, oy - 1 + pw2, 4, 6); ctx.fillRect(oleX + 22, oy - 1 + pw1, 4, 6);
+          // Pink paw pads
+          ctx.fillStyle = '#f472b6';
+          ctx.fillRect(oleX + 6, oy - 3 + pw1, 2, 2); ctx.fillRect(oleX + 11, oy - 3 + pw2, 2, 2);
+          ctx.fillRect(oleX + 18, oy - 2 + pw2, 2, 2); ctx.fillRect(oleX + 23, oy - 2 + pw1, 2, 2);
+
+          // Head upside down in pure bliss
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX - 12, oy + 2, 12, 13);
+          ctx.fillRect(oleX - 15, oy + 8, 4, 5); ctx.fillRect(oleX - 15, oy + 1, 4, 5);
+          // Happy closed eyes ^ ^
+          ctx.fillStyle = '#1e1b18';
+          ctx.fillRect(oleX - 8, oy + 5, 3, 1); ctx.fillRect(oleX - 9, oy + 6, 1, 2);
+          ctx.fillRect(oleX - 4, oy + 5, 3, 1); ctx.fillRect(oleX - 5, oy + 6, 1, 2);
+          // Chin raised high & cute pink tongue blep
+          ctx.fillStyle = cBelly; ctx.fillRect(oleX - 5, oy + 9, 6, 5);
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(oleX - 7, oy + 10, 3, 2);
+
+          // Tail swishing happily on floor
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX + 25, oy + 8, 8, 4);
+          ctx.fillRect(oleX + 31, oy + 5 + Math.sin(t * 0.3) * 3, 6, 4);
+
+          // Purr soundwave rings radiating out
+          const rPulse = (t * 1.5) % 18;
+          ctx.strokeStyle = 'rgba(101, 163, 13, 0.45)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(oleX + 10, oy + 8, 12 + rPulse, 0, Math.PI * 2); ctx.stroke();
+
+          // Animated Pixel Scratching Hand tickling chin
+          const scrX = oleX - 7 + Math.sin(t * 0.4) * 2;
+          const scrY = oy + 15 + Math.cos(t * 0.4) * 1.5;
+          ctx.fillStyle = '#F4C27A'; // hand
+          ctx.fillRect(scrX, scrY, 8, 5);
+          ctx.fillRect(scrX + 1, scrY - 3, 2, 3); ctx.fillRect(scrX + 4, scrY - 3, 2, 3); // fingers tickling
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(scrX, scrY + 5, 8, 4); // sleeve
+        } else if (action === 'yawn') {
+          // Giant hilarious cat yawn
+          const oy = oleY + breath;
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX, oy, 22, 14);
+          ctx.fillStyle = cStripe; ctx.fillRect(oleX + 5, oy + 1, 2, 12); ctx.fillRect(oleX + 11, oy + 1, 2, 12);
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX + 12, oy - 7, 13, 11);
+          ctx.fillRect(oleX + 12, oy - 12, 4, 5); ctx.fillRect(oleX + 21, oy - 12, 4, 5);
+          // Wide open mouth yawn with pink tongue
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(oleX + 16, oy - 3, 7, 6);
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(oleX + 17, oy - 1, 5, 3);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(oleX + 16, oy - 3, 2, 1); ctx.fillRect(oleX + 21, oy - 3, 2, 1); // tiny fangs
+          // Closed eyes
+          ctx.fillStyle = '#1e1b18'; ctx.fillRect(oleX + 14, oy - 5, 4, 1);
+          // Tail
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX - 5, oy + 5 + (tailSwing * 0.5), 6, 4); ctx.fillRect(oleX - 8, oy + 1 + tailSwing, 4, 4);
+        } else if (action === 'belly' || action === 'sun_belly') {
+          // Lazy roll showing belly
+          const oy = oleY + breath;
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX, oy + 2, 24, 13);
+          ctx.fillStyle = cBelly; ctx.fillRect(oleX + 6, oy + 4, 14, 8);
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX + 14, oy - 4, 12, 10);
+          ctx.fillRect(oleX + 15, oy - 8, 4, 4); ctx.fillRect(oleX + 22, oy - 8, 4, 4);
+          // Olive green eyes sleepy
+          ctx.fillStyle = cGreen; ctx.fillRect(oleX + 17, oy - 2, 3, 1);
+          // Tail
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX - 5, oy + 6 + tailSwing, 6, 4);
+        } else {
+          // Default Sitting / Sleeping Loaf Pose
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX, oleY + breath, 22, 14);
+          ctx.fillStyle = cStripe; ctx.fillRect(oleX + 5, oleY + 1 + breath, 2, 12); ctx.fillRect(oleX + 11, oleY + 1 + breath, 2, 12);
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX + 12, oleY - 7 + breath, 13, 11);
+          ctx.fillRect(oleX + 12, oleY - 12 + breath, 4, 5); ctx.fillRect(oleX + 21, oleY - 12 + breath, 4, 5);
+          // Olive green eyes with slow blink
+          const oleBlink = (t % 120 < 6) ? 1 : 3;
+          ctx.fillStyle = cGreen; ctx.fillRect(oleX + 16, oleY - 3 + breath, 3, oleBlink);
+          ctx.fillStyle = cCoat; ctx.fillRect(oleX - 5, oleY + 5 + breath + (tailSwing * 0.5), 6, 4); ctx.fillRect(oleX - 8, oleY + 1 + breath + tailSwing, 4, 4);
+
+          // If box_sleep in stage 1, draw floating Z z z
+          if (action === 'box_sleep') {
+            const zStep = (t * 0.5) % 30;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+            ctx.font = '8px monospace';
+            ctx.fillText('z', oleX + 22, oleY - 8 - (zStep * 0.5));
+          }
+        }
       }
 
       showModal({ title, message, confirmText, isDanger, type, onConfirm, onCancel }) {
