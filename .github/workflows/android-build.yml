@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -80,5 +82,21 @@ jobs:
         path: |
           android/app/build/outputs/apk/debug/*.apk
           apk/The-Escape-Journey.apk
+          The-Escape-Journey.apk
         if-no-files-found: warn
         retention-days: 30
+
+    - name: Create or Update GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.0
+        name: "The Escape Journey v1.0.0 (Android APK)"
+        body: |
+          ### 📱 The Escape Journey: จากมนุษย์เงินเดือนสู้ชีวิต ➔ สู่ Full-Time Investor
+
+          กดดาวน์โหลดไฟล์ `.apk` ด้านล่างนี้เพื่อติดตั้งลงโทรศัพท์มือถือ Android ได้ทันที!
+        files: |
+          android/app/build/outputs/apk/debug/app-debug.apk
+          apk/The-Escape-Journey.apk
+          The-Escape-Journey.apk
