@@ -22,4 +22,19 @@ if (fs.existsSync(assetsSrc)) {
   fs.cpSync(assetsSrc, assetsDest, { recursive: true });
 }
 
+const androidPublicDir = path.join(root, 'android', 'app', 'src', 'main', 'assets', 'public');
+if (fs.existsSync(androidPublicDir)) {
+  for (const file of filesToCopy) {
+    const src = path.join(root, file);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, path.join(androidPublicDir, file));
+    }
+  }
+  const androidAssetsDest = path.join(androidPublicDir, 'assets');
+  if (fs.existsSync(assetsSrc)) {
+    fs.cpSync(assetsSrc, androidAssetsDest, { recursive: true });
+  }
+  console.log('Successfully synced all web assets to android assets public');
+}
+
 console.log('Successfully synced all web assets to www/');
