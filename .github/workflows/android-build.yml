@@ -75,15 +75,15 @@ jobs:
         if-no-files-found: ignore
         retention-days: 7
 
+    - name: Prepare Named APK
+      run: |
+        cp android/app/build/outputs/apk/debug/app-debug.apk The-Escape-Journey.apk
+
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: The-Escape-Journey-debug-apk
-        path: |
-          android/app/build/outputs/apk/debug/*.apk
-          apk/The-Escape-Journey.apk
-          The-Escape-Journey.apk
-        if-no-files-found: warn
+        path: The-Escape-Journey.apk
         retention-days: 30
 
     - name: Create or Update GitHub Release
@@ -96,7 +96,4 @@ jobs:
           ### 📱 The Escape Journey: จากมนุษย์เงินเดือนสู้ชีวิต ➔ สู่ Full-Time Investor
 
           กดดาวน์โหลดไฟล์ `.apk` ด้านล่างนี้เพื่อติดตั้งลงโทรศัพท์มือถือ Android ได้ทันที!
-        files: |
-          android/app/build/outputs/apk/debug/app-debug.apk
-          apk/The-Escape-Journey.apk
-          The-Escape-Journey.apk
+        files: The-Escape-Journey.apk
