@@ -1,4 +1,4 @@
-const CACHE_NAME = 'escape-journey-v1';
+const CACHE_NAME = 'escape-journey-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,10 +9,10 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -32,9 +32,29 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.url.startsWith('chrome-extension')) return;
+
+  // Network-First for navigation & HTML so updates appear immediately
+  if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(e.request).then((res) => res || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Cache-First for static assets with network fallback
   e.respondWith(
     caches.match(e.request).then((res) => {
-      return res || fetch(e.request).catch(() => caches.match('./index.html'));
+      return res || fetch(e.request).then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        return response;
+      });
     })
   );
 });
