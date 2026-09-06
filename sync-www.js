@@ -8,7 +8,7 @@ if (!fs.existsSync(wwwDir)) {
   fs.mkdirSync(wwwDir, { recursive: true });
 }
 
-const filesToCopy = ['index.html', 'manifest.json', 'sw.js', 'app-logo.png'];
+const filesToCopy = ['index.html', 'manifest.json', 'sw.js', 'app-logo.png', '.nojekyll'];
 for (const file of filesToCopy) {
   const src = path.join(root, file);
   if (fs.existsSync(src)) {

@@ -99,6 +99,12 @@
     .stage-buttons { display: flex; gap: 4px; }
     .stage-btn { font-family: var(--font-header); font-size: 11px; font-weight: 700; background: #181412; border: 1px solid var(--border-dark); color: var(--color-text-muted); padding: 4px 10px; border-radius: 4px; cursor: pointer; }
     .stage-btn.active { background: var(--border-gold); color: #fff; border-color: var(--color-gold-bright); }
+    .room-caption { display: flex; align-items: center; gap: 7px; padding: 10px 2px 2px; font-size: 11px; color: #d8c4a0; flex-wrap: wrap; }
+    .room-live-dot { width: 6px; height: 6px; background: #91ae79; box-shadow: 0 0 0 2px #91ae7922; }
+    .room-hint { margin-left: auto; color: #a99b85; font-size: 10px; }
+    .stage-bar { gap: 8px; flex-wrap: wrap; }
+    @media (max-width: 480px) { .nav-tab { min-width: 0; padding: 10px 3px; font-size: 10px; } }
+    @media (prefers-reduced-motion: reduce) { .heart-particle { animation: none; } .tab-content { animation: none; } }
     .pet-actions { display: flex; gap: 8px; margin-top: 10px; }
     .heart-particle { position: absolute; pointer-events: none; font-size: 16px; animation: floatUp 1.2s ease-out forwards; z-index: 20; }
     @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.8); } 100% { opacity: 0; transform: translateY(-40px) scale(1.4); } }
@@ -225,10 +231,11 @@
 
             <!-- Canvas Display with Active 60fps Sprites -->
             <div class="canvas-wrapper" id="canvasWrapper">
-              <canvas id="roomCanvas" width="720" height="540"></canvas>
+              <canvas id="roomCanvas" width="720" height="540" role="img" aria-label="ฉากพิกเซลชีวิตต๋องกับกังฟูและโอเลี้ยง เปลี่ยนตาม Stage">ฉากชีวิตต๋องและแมวทั้งสอง</canvas>
               <div id="speechBubble" class="speech-bubble">แตะที่ Melo, กังฟู หรือโอเลี้ยง ได้เลยนะ!</div>
             </div>
 
+            <div class="room-caption"><span class="room-live-dot" aria-hidden="true"></span><span id="roomActivity">เตรียมห้องพักใจ</span><span class="room-hint">แตะตัวละครเพื่อทักทาย</span></div>
             <div class="pet-actions">
               <button class="pixel-btn pixel-btn-gold pixel-btn-sm" style="flex:1;" onclick="app.petKungfu()">
                 🐾 ลูบหัวกังฟู
@@ -461,6 +468,7 @@
     ข้อความแจ้งเตือน
   </div>
 
+  <script src="assets/pixel-room.js?v=1.1.0"></script>
   <script>
     const KUNGFU_QUOTES = [
   {
@@ -805,7 +813,7 @@
         this.currentStage = 1;
         this.autoStage = true;
         this.activeTab = 'livingHub';
-        this.initAssets();
+        this.pixelRoom = new PixelRoom(this);
         this.npc = {
           melo: { action: 'idle', timer: 200, manualAction: null, manualTimer: 0, lookAt: null, lookTimer: 0, x: 510, y: 300 },
           kungfu: { action: 'idle', timer: 150, manualAction: null, manualTimer: 0, x: 390, y: 430 },
@@ -815,78 +823,6 @@
         this.initUI();
         this.initCanvasEvents();
         this.startLoop();
-      }
-
-      initAssets() {
-        this.assets = {
-          stages: {
-            1: this.loadImg('assets/stages/stage1.jpg'),
-            2: this.loadImg('assets/stages/stage2.jpg'),
-            3: this.loadImg('assets/stages/stage3.jpg'),
-            4: this.loadImg('assets/stages/stage4.jpg')
-          },
-          melo: {
-            idle: this.loadImg('assets/characters/melo_idle.png'),
-            noodle: this.loadImg('assets/characters/melo_noodle.png'),
-            cheer: this.loadImg('assets/characters/melo_cheer.png'),
-            walk: [
-              this.loadImg('assets/characters/melo_walk_1.png'),
-              this.loadImg('assets/characters/melo_walk_2.png'),
-              this.loadImg('assets/characters/melo_walk_3.png'),
-              this.loadImg('assets/characters/melo_walk_4.png'),
-              this.loadImg('assets/characters/melo_walk_5.png'),
-              this.loadImg('assets/characters/melo_walk_6.png')
-            ]
-          },
-          kungfu: {
-            idle: [
-              this.loadImg('assets/characters/kungfu_idle_1.png'),
-              this.loadImg('assets/characters/kungfu_idle_2.png'),
-              this.loadImg('assets/characters/kungfu_idle_3.png'),
-              this.loadImg('assets/characters/kungfu_idle_4.png')
-            ],
-            sleep: [
-              this.loadImg('assets/characters/kungfu_sleep_1.png'),
-              this.loadImg('assets/characters/kungfu_sleep_2.png'),
-              this.loadImg('assets/characters/kungfu_sleep_3.png')
-            ],
-            walk: [
-              this.loadImg('assets/characters/kungfu_walk_1.png'),
-              this.loadImg('assets/characters/kungfu_walk_2.png'),
-              this.loadImg('assets/characters/kungfu_walk_3.png'),
-              this.loadImg('assets/characters/kungfu_walk_4.png')
-            ],
-            happy: this.loadImg('assets/characters/kungfu_happy.png')
-          },
-          oleang: {
-            idle: [
-              this.loadImg('assets/characters/oleang_idle_1.png'),
-              this.loadImg('assets/characters/oleang_idle_2.png'),
-              this.loadImg('assets/characters/oleang_idle_3.png'),
-              this.loadImg('assets/characters/oleang_idle_4.png')
-            ],
-            sleep: [
-              this.loadImg('assets/characters/oleang_sleep_1.png'),
-              this.loadImg('assets/characters/oleang_sleep_2.png'),
-              this.loadImg('assets/characters/oleang_sleep_3.png')
-            ],
-            walk: [
-              this.loadImg('assets/characters/oleang_walk_1.png'),
-              this.loadImg('assets/characters/oleang_walk_2.png'),
-              this.loadImg('assets/characters/oleang_walk_3.png'),
-              this.loadImg('assets/characters/oleang_walk_4.png'),
-              this.loadImg('assets/characters/oleang_walk_5.png'),
-              this.loadImg('assets/characters/oleang_walk_6.png')
-            ],
-            happy: this.loadImg('assets/characters/oleang_happy.png')
-          }
-        };
-      }
-
-      loadImg(src) {
-        const img = new Image();
-        img.src = src;
-        return img;
       }
 
       loadState() {
@@ -987,6 +923,11 @@
       }
 
       updateStageBadge() {
+        document.querySelectorAll('.stage-btn').forEach(button => {
+          const selected = button.id === 'autoStageBtn' ? this.autoStage : !this.autoStage && Number(button.textContent) === this.currentStage;
+          button.classList.toggle('active', selected);
+          button.setAttribute('aria-pressed', String(selected));
+        });
         const badge = document.getElementById('currentStageBadge');
         const titles = {
           1: 'STAGE 1: ก่อร่างสร้างตัว',
@@ -1765,11 +1706,17 @@
          ACTIVE 60FPS CANVAS SPRITES & ANIMATION LOOP
          ================================================================ */
       startLoop() {
-        const loop = () => {
-          this.animFrame++;
-          this.renderRoom();
+        let last;
+        const loop = (now) => {
+          const dt = last === undefined ? 0 : Math.min((now - last) / 1000, 0.05);
+          last = now;
+          if (!document.hidden && this.activeTab === 'livingHub') {
+            this.animFrame += dt * 60;
+            this.renderRoom(dt);
+          }
           requestAnimationFrame(loop);
         };
+        document.addEventListener('visibilitychange', () => { last = undefined; });
         requestAnimationFrame(loop);
       }
 
@@ -1785,78 +1732,7 @@
         });
       }
 
-      handleCanvasClick(x, y) {
-        const k = this.npc.kungfu;
-        const o = this.npc.oleang;
-        const m = this.npc.melo;
-
-        // Click Kungfu (Orange Tabby)
-        if (x >= k.x - 30 && x <= k.x + 30 && y >= k.y - 45 && y <= k.y + 35) {
-          this.petKungfu();
-          return;
-        }
-
-        // Click Oleang (Grey Tabby)
-        if (x >= o.x - 35 && x <= o.x + 35 && y >= o.y - 30 && y <= o.y + 30) {
-          this.petOleang();
-          return;
-        }
-
-        // Click Melo (Human)
-        if (x >= m.x - 35 && x <= m.x + 35 && y >= m.y - 60 && y <= m.y + 60) {
-          this.interactMelo();
-          return;
-        }
-
-        // Stage 1 Click Vision Board (Goal: House & Car)
-        if (this.currentStage === 1 && x >= 360 && x <= 580 && y >= 100 && y <= 215) {
-          this.sound.playCoin();
-          this.spawnHeart(470, 155);
-          this.showSpeechBubble('<span style="color:#fbbf24; font-weight:700;">🎯 Vision Board (เป้าหมายชีวิต):</span> รูปบ้านเดี่ยวและรถยนต์ในฝัน เตือนใจทุกวันว่าต้องสู้และมีวินัย!');
-          return;
-        }
-
-        // Stage 1 Click Noodle Cup
-        if (this.currentStage === 1 && x >= 340 && x <= 390 && y >= 270 && y <= 320) {
-          this.sound.playBlip();
-          this.showSpeechBubble('<span style="color:#f59e0b; font-weight:700;">🍜 บะหมี่ถ้วยสู้ชีวิต:</span> ประหยัดวันนี้ เพื่อพอร์ตลงทุนที่เติบโตในวันหน้า!');
-          return;
-        }
-
-        // Stage 2 Click Bookshelf
-        if (this.currentStage === 2 && x >= 80 && x <= 190 && y >= 220 && y <= 380) {
-          this.sound.playCoin();
-          this.spawnHeart(135, 300);
-          this.showSpeechBubble('<span style="color:#38bdf8; font-weight:700;">📚 คลังความรู้การลงทุน:</span> อ่านงบการเงิน เข้าใจ Cash Flow และสะสมสินทรัพย์');
-          return;
-        }
-
-        // Stage 3 Click Wall Investment Board
-        if (this.currentStage === 3 && x >= 250 && x <= 480 && y >= 80 && y <= 215) {
-          this.sound.playCoin();
-          this.spawnHeart(365, 145);
-          this.showSpeechBubble('<span style="color:#10b981; font-weight:700;">📈 บอร์ดกระแสเงินสด:</span> รายรับ > รายจ่าย, ออมเงินเพื่อลงทุน สร้างพอร์ตหุ้นปันผลต่อเนื่อง!');
-          return;
-        }
-
-        // Stage 4 Click Dream House
-        if (this.currentStage === 4 && x >= 40 && x <= 380 && y >= 80 && y <= 340) {
-          this.sound.playVictory();
-          this.spawnHeart(210, 200);
-          this.showSpeechBubble('<span style="color:#fbbf24; font-weight:700;">🏡 บ้านเดี่ยว 2 ชั้นในฝัน (Dream Home):</span> วิมานแห่งอิสรภาพทางการเงิน! ผลลัพธ์จากการมีวินัย 100%');
-          return;
-        }
-
-        // Stage 4 Click Luxury Car / Carport
-        if (this.currentStage === 4 && x >= 430 && x <= 620 && y >= 240 && y <= 345) {
-          this.sound.playCoin();
-          this.spawnHeart(520, 290);
-          this.showSpeechBubble('<span style="color:#38bdf8; font-weight:700;">🚗 รถยนต์ส่วนตัวคันใหม่:</span> รางวัลชิ้นใหญ่จากเงินสดและปันผล! ไร้ภาระหนี้จน');
-          return;
-        }
-
-        this.showSpeechBubble('<span style="color:#fbbf24; font-weight:700;">💡 แนะนำ:</span> แตะที่ Melo, กังฟู, โอเลี้ยง หรือสิ่งของในฉากเพื่อโต้ตอบได้เลยนะ!');
-      }
+      handleCanvasClick(x, y) { this.pixelRoom.interact(x, y); }
 
       petKungfu() {
         this.sound.playMeow();
@@ -1929,373 +1805,7 @@
         setTimeout(() => heart.remove(), 1200);
       }
 
-      drawSprite(img, x, y, width, height, flip = false, bob = 0) {
-        if (!img || !img.complete || img.naturalWidth === 0) return;
-        this.ctx.save();
-        this.ctx.translate(Math.round(x), Math.round(y + bob));
-        if (flip) {
-          this.ctx.scale(-1, 1);
-        }
-        this.ctx.drawImage(img, Math.round(-width / 2), Math.round(-height / 2), Math.round(width), Math.round(height));
-        this.ctx.restore();
-      }
-
-      updateNPCs() {
-        const stage = this.currentStage;
-
-        // 1. Kungfu State
-        if (this.npc.kungfu.manualTimer > 0) {
-          this.npc.kungfu.manualTimer--;
-          if (this.npc.kungfu.manualTimer === 0) this.npc.kungfu.manualAction = null;
-        } else {
-          this.npc.kungfu.timer--;
-          if (this.npc.kungfu.timer <= 0) {
-            const pools = {
-              1: ['idle', 'walk', 'loaf'],
-              2: ['idle', 'walk', 'loaf'],
-              3: ['idle', 'catnap', 'walk'],
-              4: ['idle', 'loaf', 'walk']
-            };
-            const p = pools[stage] || ['idle'];
-            this.npc.kungfu.action = p[Math.floor(Math.random() * p.length)];
-            this.npc.kungfu.timer = 180 + Math.floor(Math.random() * 200);
-          }
-        }
-
-        // 2. Oleang State
-        if (this.npc.oleang.manualTimer > 0) {
-          this.npc.oleang.manualTimer--;
-          if (this.npc.oleang.manualTimer === 0) this.npc.oleang.manualAction = null;
-        } else {
-          this.npc.oleang.timer--;
-          if (this.npc.oleang.timer <= 0) {
-            const pools = {
-              1: ['sleep', 'idle'],
-              2: ['sleep', 'idle'],
-              3: ['sleep', 'idle'],
-              4: ['sleep', 'idle', 'walk']
-            };
-            const p = pools[stage] || ['sleep'];
-            this.npc.oleang.action = p[Math.floor(Math.random() * p.length)];
-            this.npc.oleang.timer = 200 + Math.floor(Math.random() * 220);
-          }
-        }
-
-        // 3. Melo State
-        if (this.npc.melo.manualTimer > 0) {
-          this.npc.melo.manualTimer--;
-          if (this.npc.melo.manualTimer === 0) this.npc.melo.manualAction = null;
-        } else {
-          this.npc.melo.timer--;
-          if (this.npc.melo.timer <= 0) {
-            const pools = {
-              1: ['eat_noodle', 'idle', 'walk'],
-              2: ['read', 'cheer', 'idle', 'walk'],
-              3: ['trading', 'celebrate', 'idle'],
-              4: ['terrace_relax', 'walk', 'cheer']
-            };
-            const p = pools[stage] || ['idle'];
-            this.npc.melo.action = p[Math.floor(Math.random() * p.length)];
-            this.npc.melo.timer = 220 + Math.floor(Math.random() * 220);
-          }
-        }
-      }
-
-      renderRoom() {
-        const ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
-        const stage = this.currentStage, t = this.animFrame;
-        ctx.imageSmoothingEnabled = false;
-
-        // 1. Draw High-Resolution Pixel Art Background
-        const bgImg = this.assets.stages[stage];
-        if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-          ctx.drawImage(bgImg, 0, 0, w, h);
-        } else {
-          ctx.fillStyle = '#141210';
-          ctx.fillRect(0, 0, w, h);
-        }
-
-        // 2. Stage Ambient Animations
-        if (stage === 1) {
-          // Falling rain on window (x: 195..340, y: 70..215)
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(190, 70, 155, 150);
-          ctx.clip();
-          ctx.fillStyle = 'rgba(148, 163, 184, 0.65)';
-          const rY = (t * 6) % 150;
-          ctx.fillRect(215, 70 + rY, 1.5, 9);
-          ctx.fillRect(240, 70 + ((rY + 45) % 150), 1.5, 10);
-          ctx.fillRect(275, 70 + ((rY + 90) % 150), 1.5, 8);
-          ctx.fillRect(310, 70 + ((rY + 25) % 150), 1.5, 9);
-          ctx.restore();
-
-          // Noodle cup steam on table (x: 362, y: 285)
-          const sY = (t * 0.7) % 25;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-          ctx.fillRect(362 + Math.sin(t * 0.1) * 3, 285 - sY, 2, 4);
-          ctx.fillRect(366 + Math.sin(t * 0.1 + 1) * 3, 280 - sY, 2, 3);
-        } else if (stage === 2) {
-          // Floating sunbeam dust motes in sunlight
-          ctx.fillStyle = 'rgba(251, 191, 36, 0.4)';
-          const m1 = (t * 0.3) % 100;
-          ctx.fillRect(250 + Math.sin(t * 0.05) * 15, 210 + m1, 2, 2);
-          ctx.fillRect(310 + Math.cos(t * 0.06) * 20, 260 + ((m1 + 50) % 100), 2, 2);
-        } else if (stage === 3) {
-          // Green chart glow on wall board
-          const chartGlow = Math.sin(t * 0.08) * 0.12 + 0.18;
-          ctx.fillStyle = `rgba(16, 185, 129, ${chartGlow})`;
-          ctx.fillRect(255, 88, 220, 115);
-        } else if (stage === 4) {
-          // Garden flower petals drifting on lawn
-          const breeze = Math.sin(t * 0.04) * 12;
-          ctx.fillStyle = 'rgba(254, 243, 199, 0.7)';
-          ctx.fillRect(380 + breeze + (t % 220), 400 + Math.sin(t * 0.08) * 12, 2, 2);
-          ctx.fillStyle = 'rgba(244, 114, 182, 0.7)';
-          ctx.fillRect(330 + breeze + ((t + 100) % 220), 420 + Math.cos(t * 0.08) * 10, 2, 2);
-        }
-
-        // 3. Update NPC Activities
-        this.updateNPCs();
-
-        // 4. Draw Characters (Respecting Room Furniture Layout)
-        if (stage === 1) {
-          this.drawOleang(ctx, stage, t);
-          this.drawKungfu(ctx, stage, t);
-          this.drawMelo(ctx, stage, t);
-        } else if (stage === 2) {
-          this.drawKungfu(ctx, stage, t);
-          this.drawOleang(ctx, stage, t);
-          this.drawMelo(ctx, stage, t);
-        } else if (stage === 3) {
-          this.drawOleang(ctx, stage, t);
-          this.drawKungfu(ctx, stage, t);
-          this.drawMelo(ctx, stage, t);
-        } else {
-          this.drawKungfu(ctx, stage, t);
-          this.drawOleang(ctx, stage, t);
-          this.drawMelo(ctx, stage, t);
-        }
-
-        // 5. Top Stage Indicator Banner
-        const titles = {
-          1: '⚡ STAGE 1: สู้ชีวิต / ปลดหนี้ 🍜',
-          2: '🌱 STAGE 2: สร้างรากฐาน / เงินสำรอง 📚',
-          3: '📈 STAGE 3: กระแสเงินสด & รถคันแรก 🚗',
-          4: '🏡 STAGE 4: อิสรภาพ & บ้านในฝัน 🌴'
-        };
-        ctx.fillStyle = 'rgba(18, 14, 11, 0.88)';
-        ctx.fillRect(w / 2 - 150, 10, 300, 22);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(w / 2 - 150, 10, 300, 22);
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 9.5px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(titles[stage] || titles[1], w / 2, 25);
-        ctx.textAlign = 'start';
-      }
-
-      /* ================================================================
-         CHARACTER SPRITES: MELO, KUNGFU, OLEANG
-         ================================================================ */
-      drawMelo(ctx, stage, t) {
-        const action = this.npc.melo.manualAction || this.npc.melo.action;
-        const breath = Math.sin(t * 0.08) * 1.5;
-        let x = 510, y = 300;
-        let sprite = this.assets.melo.idle;
-        let w = 56, h = 105;
-        let flip = false;
-
-        if (stage === 1) {
-          x = 510; y = 300;
-          if (action === 'eat_noodle' || action === 'type' || action === 'headache' || action === 'coffee') {
-            sprite = this.assets.melo.noodle;
-            w = 58; h = 100;
-          } else if (action === 'walk') {
-            const cycle = Math.floor(t / 8) % 6;
-            sprite = this.assets.melo.walk[cycle];
-            const offset = Math.sin(t * 0.04) * 35;
-            x = 480 + offset;
-            flip = Math.cos(t * 0.04) < 0;
-          } else if (action === 'cheer') {
-            sprite = this.assets.melo.cheer;
-            w = 58; h = 100;
-          }
-        } else if (stage === 2) {
-          x = 510; y = 300;
-          if (action === 'cheer') {
-            sprite = this.assets.melo.cheer;
-            w = 58; h = 100;
-          } else if (action === 'walk') {
-            const cycle = Math.floor(t / 8) % 6;
-            sprite = this.assets.melo.walk[cycle];
-            const offset = Math.sin(t * 0.035) * 45;
-            x = 460 + offset;
-            flip = Math.cos(t * 0.035) < 0;
-          } else {
-            sprite = this.assets.melo.idle;
-          }
-        } else if (stage === 3) {
-          // Seated in executive chair behind desk!
-          x = 360; y = 295;
-          if (action === 'celebrate' || action === 'cheer') {
-            sprite = this.assets.melo.cheer;
-            w = 58; h = 98;
-          } else {
-            sprite = this.assets.melo.idle;
-            w = 56; h = 102;
-          }
-          // Clip below desk surface (y = 345) so lower body is naturally hidden behind executive desk!
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(0, 0, this.canvas.width, 345);
-          ctx.clip();
-          this.drawSprite(sprite, x, y, w, h, flip, breath);
-          ctx.restore();
-          this.npc.melo.x = x;
-          this.npc.melo.y = y;
-          return;
-        } else {
-          // Stage 4: Patio deck under umbrella
-          x = 590; y = 390;
-          if (action === 'walk') {
-            const cycle = Math.floor(t / 8) % 6;
-            sprite = this.assets.melo.walk[cycle];
-            const offset = Math.sin(t * 0.03) * 60;
-            x = 450 + offset; y = 430;
-            flip = Math.cos(t * 0.03) < 0;
-          } else if (action === 'cheer') {
-            sprite = this.assets.melo.cheer;
-            w = 58; h = 100;
-          } else {
-            sprite = this.assets.melo.idle;
-          }
-        }
-
-        this.npc.melo.x = x;
-        this.npc.melo.y = y;
-        this.drawSprite(sprite, x, y, w, h, flip, breath);
-      }
-
-      drawKungfu(ctx, stage, t) {
-        const action = this.npc.kungfu.manualAction || this.npc.kungfu.action;
-        let x = 390, y = 430;
-        let sprite = this.assets.kungfu.idle[Math.floor(t / 20) % 4];
-        let w = 50, h = 72;
-        let flip = false;
-        let bob = Math.sin(t * 0.1) * 1.5;
-
-        if (stage === 1) {
-          x = 390; y = 430;
-        } else if (stage === 2) {
-          x = 230; y = 430; // beside bookshelf under sunbeam
-        } else if (stage === 3) {
-          x = 80; y = 405; // on left armchair
-        } else {
-          x = 240; y = 325; // on porch steps of dream house
-          w = 46; h = 66;
-        }
-
-        if (action === 'pet_react' || action === 'happy') {
-          sprite = this.assets.kungfu.happy;
-          w = 54; h = 72;
-          bob = Math.sin(t * 0.2) * 2;
-        } else if (action === 'walk') {
-          const cycle = Math.floor(t / 8) % 4;
-          sprite = this.assets.kungfu.walk[cycle];
-          w = 58; h = 58;
-          const offset = Math.sin(t * 0.04) * 30;
-          x += offset;
-          flip = Math.cos(t * 0.04) < 0;
-        } else if (action === 'catnap' || action === 'loaf') {
-          const cycle = Math.floor(t / 30) % 3;
-          sprite = this.assets.kungfu.sleep[cycle];
-          w = 60; h = 42;
-          if (t % 60 < 30) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.font = 'bold 9px monospace';
-            ctx.fillText('z', x + 18, y - 18 - (t % 30) * 0.4);
-          }
-        }
-
-        this.npc.kungfu.x = x;
-        this.npc.kungfu.y = y;
-        this.drawSprite(sprite, x, y, w, h, flip, bob);
-      }
-
-      drawOleang(ctx, stage, t) {
-        const action = this.npc.oleang.manualAction || this.npc.oleang.action;
-        let x = 160, y = 400; // default in stage 1 pet bed
-        let sprite = this.assets.oleang.sleep[Math.floor(t / 30) % 3];
-        let w = 64, h = 40;
-        let flip = false;
-        let bob = Math.sin(t * 0.08) * 1;
-
-        if (stage === 1) {
-          x = 160; y = 400; // inside worn pet bed on left floor
-          if (action === 'idle') {
-            sprite = this.assets.oleang.idle[Math.floor(t / 20) % 4];
-            w = 46; h = 54;
-          } else {
-            sprite = this.assets.oleang.sleep[Math.floor(t / 30) % 3];
-            w = 64; h = 40;
-          }
-        } else if (stage === 2) {
-          x = 640; y = 440; // inside new pet bed on bottom right
-          if (action === 'idle') {
-            sprite = this.assets.oleang.idle[Math.floor(t / 20) % 4];
-            w = 46; h = 54;
-          } else {
-            sprite = this.assets.oleang.sleep[Math.floor(t / 30) % 3];
-            w = 64; h = 40;
-          }
-        } else if (stage === 3) {
-          x = 625; y = 430; // inside luxury pet bed on bottom right
-          if (action === 'idle') {
-            sprite = this.assets.oleang.idle[Math.floor(t / 20) % 4];
-            w = 46; h = 54;
-          } else {
-            sprite = this.assets.oleang.sleep[Math.floor(t / 30) % 3];
-            w = 64; h = 40;
-          }
-        } else {
-          // Stage 4: On green lawn
-          x = 420; y = 420;
-          if (action === 'walk') {
-            const cycle = Math.floor(t / 8) % 6;
-            sprite = this.assets.oleang.walk[cycle];
-            w = 54; h = 54;
-            const offset = Math.sin(t * 0.035) * 35;
-            x += offset;
-            flip = Math.cos(t * 0.035) < 0;
-          } else if (action === 'idle') {
-            sprite = this.assets.oleang.idle[Math.floor(t / 20) % 4];
-            w = 46; h = 54;
-          } else {
-            sprite = this.assets.oleang.sleep[Math.floor(t / 30) % 3];
-            w = 64; h = 40;
-          }
-        }
-
-        if (action === 'scratch_react' || action === 'happy') {
-          sprite = this.assets.oleang.happy;
-          w = 54; h = 58;
-          bob = Math.sin(t * 0.25) * 2;
-        }
-
-        if (action === 'sleep' || (!action.includes('walk') && !action.includes('idle') && action !== 'scratch_react' && action !== 'happy')) {
-          if (t % 50 < 25) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.font = 'bold 9px monospace';
-            ctx.fillText('z', x + 20, y - 12 - (t % 25) * 0.4);
-          }
-        }
-
-        this.npc.oleang.x = x;
-        this.npc.oleang.y = y;
-        this.drawSprite(sprite, x, y, w, h, flip, bob);
-      }
+      renderRoom(dt = 0) { this.pixelRoom.render(dt); }
 
       showModal({ title, message, confirmText, isDanger, type, onConfirm, onCancel }) {
         const overlay = document.getElementById('genericModalOverlay');

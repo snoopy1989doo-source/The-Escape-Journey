@@ -1,7 +1,8 @@
-const CACHE_NAME = 'escape-journey-v3';
+const CACHE_NAME = 'escape-journey-v5-pixel-1.1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './assets/pixel-room.js?v=1.1.0',
   './manifest.json',
   './app-logo.png',
   './assets/icons/icon-192.png',

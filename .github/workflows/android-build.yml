@@ -25,6 +25,7 @@ jobs:
     - name: Install dependencies & Build www
       run: |
         npm ci
+        node tests/pixel-room.test.cjs
         npm run build
 
     - name: Set up JDK 21
@@ -90,10 +91,13 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.0.0
-        name: "The Escape Journey v1.0.0 (Android APK)"
+        tag_name: v1.1.0
+        target_commitish: ${{ github.sha }}
+        name: "The Escape Journey v1.1.0 (Pixel World · Android APK)"
         body: |
           ### 📱 The Escape Journey: จากมนุษย์เงินเดือนสู้ชีวิต ➔ สู่ Full-Time Investor
 
-          กดดาวน์โหลดไฟล์ `.apk` ด้านล่างนี้เพื่อติดตั้งลงโทรศัพท์มือถือ Android ได้ทันที!
+          ฉาก Pixel Art 2D ทั้ง 4 Stage พร้อมเส้นทางเดินต่อเนื่อง กิจกรรมประจำ Stage และแมวที่โต้ตอบได้
+
+          ดาวน์โหลด The-Escape-Journey.apk ด้านล่าง (Debug APK สำหรับติดตั้งโดยตรง)
         files: The-Escape-Journey.apk

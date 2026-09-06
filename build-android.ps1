@@ -1,29 +1,44 @@
-﻿Write-Host "[1/4] Syncing web files to www/ ..." -ForegroundColor Cyan
-if (!(Test-Path "$PSScriptRoot\www")) { New-Item -ItemType Directory -Path "$PSScriptRoot\www" | Out-Null }
-Copy-Item -Force "$PSScriptRoot\index.html" "$PSScriptRoot\www\index.html"
-Copy-Item -Force "$PSScriptRoot\manifest.json" "$PSScriptRoot\www\manifest.json"
-Copy-Item -Force "$PSScriptRoot\sw.js" "$PSScriptRoot\www\sw.js"
-Copy-Item -Force "$PSScriptRoot\app-logo.png" "$PSScriptRoot\www\app-logo.png"
-if (Test-Path "$PSScriptRoot\assets") {
-    Copy-Item -Recurse -Force "$PSScriptRoot\assets" "$PSScriptRoot\www\"
-}
+$ErrorActionPreference = 'Stop'
+Push-Location $PSScriptRoot
+try {
+    Write-Host '[1/4] Syncing web files ...' -ForegroundColor Cyan
+    node sync-www.js
+    if ($LASTEXITCODE -ne 0) { throw 'Web sync failed.' }
 
-Write-Host "[2/4] Capacitor Copy Android..." -ForegroundColor Cyan
-npx cap copy android
+    Write-Host '[2/4] Copying Capacitor Android assets ...' -ForegroundColor Cyan
+    & "$PSScriptRoot\node_modules\.bin\cap.cmd" copy android
+    if ($LASTEXITCODE -ne 0) { throw 'Capacitor copy failed.' }
 
-Write-Host "[3/4] Running Gradle Assemble Debug APK..." -ForegroundColor Cyan
-Push-Location "$PSScriptRoot\android"
-cmd.exe /c "gradlew.bat assembleDebug"
-Pop-Location
+    Write-Host '[3/4] Building Debug APK (JDK 21 and Android SDK required) ...' -ForegroundColor Cyan
+    Push-Location "$PSScriptRoot\android"
+    try {
+        & '.\gradlew.bat' assembleDebug --no-daemon
+        if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed; existing APKs were not replaced.' }
+    } finally { Pop-Location }
 
-$sourceApk = "C:\temp\escape_journey_build\android\app\outputs\apk\debug\app-debug.apk"
-if (Test-Path $sourceApk) {
-    if (!(Test-Path "$PSScriptRoot\apk")) { New-Item -ItemType Directory -Path "$PSScriptRoot\apk" | Out-Null }
-    Copy-Item -Force $sourceApk "$PSScriptRoot\The-Escape-Journey.apk"
-    Copy-Item -Force $sourceApk "$PSScriptRoot\apk\The-Escape-Journey.apk"
-    Write-Host "[SUCCESS] APK built successfully at:" -ForegroundColor Green
-    Write-Host "   - $PSScriptRoot\The-Escape-Journey.apk" -ForegroundColor Yellow
-    Write-Host "   - $PSScriptRoot\apk\The-Escape-Journey.apk" -ForegroundColor Yellow
-} else {
-    Write-Host "[ERROR] Output APK file not found." -ForegroundColor Red
-}
+    # The repository redirects Windows Gradle outputs to C:/temp to avoid path issues.
+    $candidates = @(
+        'C:\temp\escape_journey_build\android\app\outputs\apk\debug\app-debug.apk',
+        "$PSScriptRoot\android\app\build\outputs\apk\debug\app-debug.apk"
+    )
+    $sourceApk = $candidates | Where-Object { Test-Path -LiteralPath $_ } |
+        Get-Item | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+    if (!$sourceApk) { throw 'Gradle finished but no APK output was found.' }
+    # Verify the embedded renderer matches this checkout, including incremental builds.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($sourceApk.FullName)
+    try {
+        $entry = $archive.GetEntry('assets/public/assets/pixel-room.js')
+        if (!$entry) { throw 'Built APK is missing the pixel renderer.' }
+        $reader = [System.IO.StreamReader]::new($entry.Open())
+        try { $embedded = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        $expected = [System.IO.File]::ReadAllText("$PSScriptRoot\assets\pixel-room.js")
+        if ($embedded -cne $expected) { throw 'Built APK contains an outdated pixel renderer.' }
+    } finally { $archive.Dispose() }
+
+    Write-Host '[4/4] Saving verified APK ...' -ForegroundColor Cyan
+    New-Item -ItemType Directory -Force -Path "$PSScriptRoot\apk" | Out-Null
+    Copy-Item -LiteralPath $sourceApk.FullName -Destination "$PSScriptRoot\The-Escape-Journey.apk" -Force
+    Copy-Item -LiteralPath $sourceApk.FullName -Destination "$PSScriptRoot\apk\The-Escape-Journey.apk" -Force
+    Write-Host "[SUCCESS] $PSScriptRoot\apk\The-Escape-Journey.apk" -ForegroundColor Green
+} finally { Pop-Location }

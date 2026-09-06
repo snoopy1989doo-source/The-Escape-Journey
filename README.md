@@ -1,5 +1,10 @@
 # 🧭 The Escape Journey: จากมนุษย์เงินเดือนสู้ชีวิต ➔ สู่ Full-Time Investor
 
+เวอร์ชัน 1.1.0: ฉาก Pixel Art 2D บนกริดเดียวกันทั้ง 4 Stage พร้อมเส้นทางเดินต่อเนื่อง กิจกรรมตาม Stage และการตอบสนองของแมว รองรับโหมดลดการเคลื่อนไหว
+
+- [เปิดเว็บ](https://snoopy1989doo-source.github.io/The-Escape-Journey/)
+- [ดาวน์โหลด APK เวอร์ชันล่าสุด](https://github.com/snoopy1989doo-source/The-Escape-Journey/releases/latest) — Debug APK สำหรับติดตั้งโดยตรง
+
 **The Escape Journey** คือ Standalone Web Application และ Android Hybrid App (ขับเคลื่อนด้วย HTML5 + CSS3 + Vanilla JavaScript ผ่าน Capacitor) สไตล์ **16-Bit Retro Pixel Art** ที่จำลองการเดินทางต่อสู้ชีวิตจริงของผู้ใช้ — **"จากมนุษย์เงินเดือนสู้ชีวิต ➔ สู่ Full-Time Investor"**
 
 ทุกองค์ประกอบถูกออกแบบตาม Character Bible จาก **Obsidian SecondBrain** เพื่อสะท้อนตัวตน วินัย และสร้างความพร้อมทางการเงินและการลงทุนอย่างแท้จริง
